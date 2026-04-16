@@ -1,21 +1,24 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
-
-/* ── נתוני ברירת מחדל ── */
-const DEFAULT_FAMILY = [
-  { id: 'sarah',  name: 'שרה',  relation: 'הבת',          emoji: '👩‍🦳', photo: null, voice: 'זו שרה, הבת שלך',           wrong: ['רחל', 'מרים'] },
-  { id: 'daniel', name: 'דניאל',relation: 'הנכד',          emoji: '👨‍🦱', photo: null, voice: 'זה דניאל, הנכד שלך',         wrong: ['יוסי', 'עמוס'] },
-  { id: 'noa',    name: 'נועה', relation: 'הנכדה הקטנה',   emoji: '👧',  photo: null, voice: 'זו נועה, הנכדה הקטנה שלך',   wrong: ['תמר', 'דינה'] },
-  { id: 'yossi',  name: 'יוסי', relation: 'הבן',           emoji: '👨',  photo: null, voice: 'זה יוסי, הבן שלך',            wrong: ['משה', 'דוד'] },
-]
+import {
+  doc, getDoc, setDoc, onSnapshot
+} from 'firebase/firestore'
+import { db } from '../firebase'
 
 const DAYS = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת']
 const todayName = DAYS[new Date().getDay()]
 
+const DEFAULT_FAMILY = [
+  { id: 'sarah',  name: 'שרה',  relation: 'הבת',        emoji: '👩‍🦳', photo: null, voice: 'זו שרה, הבת שלך',         wrong: ['רחל','מרים'] },
+  { id: 'daniel', name: 'דניאל',relation: 'הנכד',        emoji: '👨‍🦱', photo: null, voice: 'זה דניאל, הנכד שלך',       wrong: ['יוסי','עמוס'] },
+  { id: 'noa',    name: 'נועה', relation: 'הנכדה הקטנה', emoji: '👧',  photo: null, voice: 'זו נועה, הנכדה הקטנה שלך', wrong: ['תמר','דינה'] },
+  { id: 'yossi',  name: 'יוסי', relation: 'הבן',         emoji: '👨',  photo: null, voice: 'זה יוסי, הבן שלך',          wrong: ['משה','דוד'] },
+]
+
 const DEFAULT_QUESTIONS = [
-  { id: 'day',      question: 'איזה יום היום?',          correct: todayName,   choices: [todayName, 'שני', 'שישי'],   isDay: true },
+  { id: 'day',      question: 'איזה יום היום?',             correct: todayName,   choices: [todayName,'שני','שישי'], isDay: true },
   { id: 'morning',  question: 'מה עושים אחרי ארוחת בוקר?', correct: 'טיול קצר', choices: ['טיול קצר','שינה ארוכה','שחייה'] },
-  { id: 'daughter', question: 'מה שמה של הבת?',          correct: 'שרה',       choices: ['שרה','רחל','מרים'] },
-  { id: 'evening',  question: 'מי מתקשר בערב?',          correct: 'יוסי',      choices: ['יוסי','שכן','רופא'] },
+  { id: 'daughter', question: 'מה שמה של הבת?',            correct: 'שרה',       choices: ['שרה','רחל','מרים'] },
+  { id: 'evening',  question: 'מי מתקשר בערב?',            correct: 'יוסי',      choices: ['יוסי','שכן','רופא'] },
 ]
 
 const DEFAULT_SETTINGS = {
@@ -24,69 +27,99 @@ const DEFAULT_SETTINGS = {
   autoSpeak: true,
 }
 
-/* ── Context ── */
 const DataContext = createContext(null)
 
-function load(key, fallback) {
-  try {
-    const raw = localStorage.getItem(key)
-    return raw ? JSON.parse(raw) : fallback
-  } catch { return fallback }
-}
-
-function save(key, value) {
-  try { localStorage.setItem(key, JSON.stringify(value)) } catch {}
-}
-
 export function DataProvider({ children }) {
-  const [family,    setFamilyRaw]    = useState(() => load('zj_family',    DEFAULT_FAMILY))
-  const [questions, setQuestionsRaw] = useState(() => load('zj_questions', DEFAULT_QUESTIONS))
-  const [settings,  setSettingsRaw]  = useState(() => load('zj_settings',  DEFAULT_SETTINGS))
+  const [family,    setFamily]    = useState(DEFAULT_FAMILY)
+  const [questions, setQuestions] = useState(DEFAULT_QUESTIONS)
+  const [settings,  setSettings]  = useState(DEFAULT_SETTINGS)
+  const [loading,   setLoading]   = useState(true)
 
-  function setFamily(v)    { setFamilyRaw(v);    save('zj_family', v) }
-  function setQuestions(v) { setQuestionsRaw(v); save('zj_questions', v) }
-  function setSettings(v)  { setSettingsRaw(v);  save('zj_settings', v) }
+  useEffect(() => {
+    async function initIfEmpty() {
+      const famRef = doc(db, 'app', 'family')
+      const qRef   = doc(db, 'app', 'questions')
+      const setRef = doc(db, 'app', 'settings')
+      const [famSnap, qSnap, setSnap] = await Promise.all([
+        getDoc(famRef), getDoc(qRef), getDoc(setRef)
+      ])
+      if (!famSnap.exists())  await setDoc(famRef,  { items: DEFAULT_FAMILY })
+      if (!qSnap.exists())    await setDoc(qRef,    { items: DEFAULT_QUESTIONS })
+      if (!setSnap.exists())  await setDoc(setRef,  DEFAULT_SETTINGS)
+    }
 
-  /* helpers */
+    initIfEmpty().then(() => {
+      const unsubFamily = onSnapshot(doc(db, 'app', 'family'), snap => {
+        if (snap.exists()) setFamily(snap.data().items || DEFAULT_FAMILY)
+        setLoading(false)
+      })
+      const unsubQ = onSnapshot(doc(db, 'app', 'questions'), snap => {
+        if (snap.exists()) setQuestions(snap.data().items || DEFAULT_QUESTIONS)
+      })
+      const unsubSet = onSnapshot(doc(db, 'app', 'settings'), snap => {
+        if (snap.exists()) setSettings(snap.data())
+      })
+      return () => { unsubFamily(); unsubQ(); unsubSet() }
+    }).catch(err => {
+      console.error('Firebase error:', err)
+      setLoading(false)
+    })
+  }, [])
+
+  async function saveFamilyToDb(newFamily) {
+    setFamily(newFamily)
+    await setDoc(doc(db, 'app', 'family'), { items: newFamily })
+  }
+
   function addFamilyMember(member) {
-    const id = 'p_' + Date.now()
-    setFamily([...family, { id, wrong: ['', ''], ...member }])
+    saveFamilyToDb([...family, { id: 'p_' + Date.now(), wrong: ['',''], ...member }])
   }
   function updateFamilyMember(id, updates) {
-    setFamily(family.map(f => f.id === id ? { ...f, ...updates } : f))
+    saveFamilyToDb(family.map(f => f.id === id ? { ...f, ...updates } : f))
   }
   function removeFamilyMember(id) {
-    setFamily(family.filter(f => f.id !== id))
+    saveFamilyToDb(family.filter(f => f.id !== id))
+  }
+
+  async function saveQuestionsToDb(newQ) {
+    setQuestions(newQ)
+    await setDoc(doc(db, 'app', 'questions'), { items: newQ })
   }
 
   function addQuestion(q) {
-    const id = 'q_' + Date.now()
-    setQuestions([...questions, { id, ...q }])
+    saveQuestionsToDb([...questions, { id: 'q_' + Date.now(), ...q }])
   }
   function updateQuestion(id, updates) {
-    setQuestions(questions.map(q => q.id === id ? { ...q, ...updates } : q))
+    saveQuestionsToDb(questions.map(q => q.id === id ? { ...q, ...updates } : q))
   }
   function removeQuestion(id) {
-    setQuestions(questions.filter(q => q.id !== id))
+    saveQuestionsToDb(questions.filter(q => q.id !== id))
   }
 
-  function updateSettings(updates) {
-    setSettings(s => { const next = { ...s, ...updates }; save('zj_settings', next); return next })
+  async function updateSettings(updates) {
+    const next = { ...settings, ...updates }
+    setSettings(next)
+    await setDoc(doc(db, 'app', 'settings'), next)
   }
 
-  /* photo album derived */
   const photoAlbum = [
     { emoji: '👨‍👩‍👧', caption: 'כל המשפחה', sub: 'יחד באהבה', photo: null },
     ...family.map(f => ({ emoji: f.emoji, caption: f.name, sub: f.relation, photo: f.photo })),
   ]
+
+  if (loading) return (
+    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', minHeight:'100vh', gap:'16px', fontFamily:'Rubik,Arial,sans-serif', direction:'rtl' }}>
+      <div style={{ fontSize:'48px' }}>🧠</div>
+      <p style={{ fontSize:'20px', color:'#2E7D8C', fontWeight:700 }}>טוען זוכרים יחד...</p>
+    </div>
+  )
 
   return (
     <DataContext.Provider value={{
       family, addFamilyMember, updateFamilyMember, removeFamilyMember,
       questions, addQuestion, updateQuestion, removeQuestion,
       settings, updateSettings,
-      photoAlbum,
-      DAYS, todayName,
+      photoAlbum, DAYS, todayName,
     }}>
       {children}
     </DataContext.Provider>
