@@ -1,0 +1,113 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    direction: rtl;
+    font-family: 'Rubik', Arial, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    background-color: #F7F5F0;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  * {
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+@layer components {
+  /* כפתור ראשי גדול */
+  .btn-main {
+    @apply w-full max-w-md min-h-[80px] rounded-2xl border-2 border-primary
+           bg-white text-primary text-[22px] font-bold
+           flex items-center justify-center gap-3
+           transition-all duration-150 cursor-pointer
+           active:scale-95 select-none;
+  }
+
+  .btn-main:hover {
+    @apply bg-primary-light;
+  }
+
+  .btn-main.filled {
+    @apply bg-primary text-white border-primary;
+  }
+
+  .btn-main.filled:hover {
+    @apply bg-primary-dark;
+  }
+
+  /* כפתור חזרה */
+  .btn-back {
+    @apply px-8 py-3 rounded-full border-2 border-gray-300
+           bg-white text-gray-500 text-[17px] font-medium
+           cursor-pointer transition-all duration-150
+           active:scale-95 select-none;
+  }
+
+  .btn-back:hover {
+    @apply bg-gray-100;
+  }
+
+  /* כותרת מסך */
+  .screen-title {
+    @apply text-[28px] font-bold text-gray-800 text-center mb-2;
+  }
+
+  .screen-sub {
+    @apply text-[18px] text-gray-500 text-center mb-7;
+  }
+
+  /* כרטיס */
+  .card {
+    @apply bg-white rounded-2xl border border-gray-200 p-5;
+  }
+
+  /* פס עליון */
+  .top-bar {
+    @apply w-full flex justify-between items-center mb-5;
+  }
+
+  .app-logo {
+    @apply text-[22px] font-bold text-primary;
+  }
+
+  .help-btn {
+    @apply px-5 py-2 rounded-full border-2 border-primary
+           bg-primary-light text-primary text-[16px] font-semibold
+           cursor-pointer transition-all active:scale-95;
+  }
+
+  /* הודעת משוב */
+  .feedback {
+    @apply text-[22px] font-bold text-center min-h-[36px];
+  }
+
+  .feedback.success { @apply text-success; }
+  .feedback.neutral { @apply text-primary; }
+}
+
+/* אנימציה עדינה לכניסת מסך */
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.screen-enter {
+  animation: fadeSlideIn 0.25s ease-out;
+}
+
+/* קלפי זיכרון */
+@keyframes cardFlip {
+  0%   { transform: rotateY(0deg); }
+  100% { transform: rotateY(180deg); }
+}
+
+.card-flip {
+  perspective: 600px;
+}
