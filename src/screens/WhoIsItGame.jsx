@@ -1,25 +1,43 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { TopBar, Feedback, speak } from '../components/UI'
 import { useData } from '../context/DataContext'
 
-function buildQuestion(person) {
-  const wrong = (person.wrong || []).filter(Boolean).slice(0, 1)
-  const choices = [person.name, ...wrong].sort(() => Math.random() - 0.5)
-  return { person, choices }
-}
-
 export default function WhoIsItGame() {
   const nav = useNavigate()
-  const { family } = useData()
-  const [queue] = useState(() => [...family].sort(() => Math.random() - 0.5))
-  const [idx, setIdx] = useState(0)
-  const [question, setQuestion] = useState(() => family.length ? buildQuestion(family[0]) : null)
+  const { family, gameState, recordWhoResult, getWhoQueue, getWrongNames } = useData()
+
+  const [queue, setQueue]     = useState([])
+  const [idx, setIdx]         = useState(0)
+  const [choices, setChoices] = useState([])
   const [answered, setAnswered] = useState(false)
   const [feedback, setFeedback] = useState('')
-  const [chosen, setChosen] = useState(null)
+  const [chosen, setChosen]   = useState(null)
+  const [currentPhoto, setCurrentPhoto] = useState(null)
 
-  useEffect(() => { speak('מי זה?') }, [idx])
+  useEffect(() => {
+    if (family.length) {
+      const q = getWhoQueue()
+      setQueue(q)
+      loadQuestion(q, 0)
+    }
+  }, [family])
+
+  function loadQuestion(q, i) {
+    if (!q.length) return
+    const person = q[i % q.length]
+    // בחר תמונה אקראית מהאדם
+    const photos = person.photos || []
+    const photo  = photos.length ? photos[Math.floor(Math.random() * photos.length)] : null
+    setCurrentPhoto(photo)
+
+    // 3 אפשרויות: השם הנכון + 2 שגויים מאותו מגדר
+    const wrong = getWrongNames(person, 2)
+    const opts  = [person.name, ...wrong].sort(() => Math.random() - 0.5)
+    setChoices(opts)
+    setAnswered(false); setFeedback(''); setChosen(null)
+    speak('מי זה?')
+  }
 
   if (!family.length) return (
     <div className="flex flex-col items-center justify-center min-h-[85vh] text-center gap-4">
@@ -28,33 +46,51 @@ export default function WhoIsItGame() {
     </div>
   )
 
+  const person = queue[idx % queue.length]
+  if (!person) return null
+
   function answer(name) {
     if (answered) return
     setAnswered(true); setChosen(name)
-    const correct = name === question.person.name
+    const correct = name === person.name
+    recordWhoResult(correct)
     const msg = correct
-      ? `נכון! זה ${question.person.name}, ${question.person.relation} שלך 🌟`
-      : `זה ${question.person.name}, ${question.person.relation} שלך ❤️`
+      ? `נכון! ${person.gender==='male'?'זה':'זו'} ${person.name}, ${person.relation} שלך 🌟`
+      : `${person.gender==='male'?'זה':'זו'} ${person.name}, ${person.relation} שלך ❤️`
     setFeedback(msg)
     speak(msg.replace('🌟','').replace('❤️',''))
   }
 
   function next() {
-    if (idx + 1 >= queue.length) { nav('/success'); return }
-    const ni = idx + 1
-    setIdx(ni); setQuestion(buildQuestion(queue[ni]))
-    setAnswered(false); setFeedback(''); setChosen(null)
+    if (idx + 1 >= queue.length) {
+      nav('/success')
+    } else {
+      const ni = idx + 1
+      setIdx(ni)
+      loadQuestion(queue, ni)
+    }
   }
 
-  const { person, choices } = question
+  const levelLabel = `רמה ${gameState.whoLevel}`
 
   return (
     <div className="screen-enter flex flex-col items-center min-h-[85vh]">
-      <TopBar title="מי זה?" />
-      <h1 className="screen-title">מי זה?</h1>
-      <div className="w-48 h-48 rounded-full bg-primary-light border-4 border-primary flex items-center justify-center text-[80px] mb-5 overflow-hidden">
-        {person.photo ? <img src={person.photo} alt={person.name} className="w-full h-full object-cover" /> : person.emoji}
+      <div className="top-bar">
+        <span className="app-logo">👨‍👩‍👧 מי זה?</span>
+        <span className="text-[14px] text-gray-400 bg-gray-100 px-3 py-1 rounded-full">{levelLabel}</span>
       </div>
+
+      <h1 className="screen-title">מי זה?</h1>
+
+      {/* תמונה */}
+      <div className="w-52 h-52 rounded-3xl bg-primary-light border-4 border-primary flex items-center justify-center text-[80px] mb-5 overflow-hidden shadow-md">
+        {currentPhoto
+          ? <img src={currentPhoto.url} alt={person.name} className="w-full h-full object-cover" />
+          : <span>{person.emoji}</span>
+        }
+      </div>
+
+      {/* 3 אפשרויות */}
       <div className="flex flex-col gap-4 w-full max-w-sm">
         {choices.map(name => {
           let style = 'bg-white border-gray-300 text-gray-800'
@@ -68,13 +104,18 @@ export default function WhoIsItGame() {
           )
         })}
       </div>
+
       <Feedback msg={feedback} />
-      <button className="mt-2 text-primary underline text-[17px]" onClick={() => speak(person.voice || 'מי זה?')}>
+
+      <button className="mt-2 text-primary underline text-[17px]"
+        onClick={() => speak(person.voice || 'מי זה?')}>
         🔊 השמעה חוזרת
       </button>
+
       <div className="flex gap-4 mt-6">
         {answered && (
-          <button onClick={next} className="px-8 py-3 rounded-full bg-primary text-white text-[18px] font-bold active:scale-95">
+          <button onClick={next}
+            className="px-8 py-3 rounded-full bg-primary text-white text-[18px] font-bold active:scale-95">
             {idx + 1 < queue.length ? 'הבא ←' : 'סיום 🌟'}
           </button>
         )}
