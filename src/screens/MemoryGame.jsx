@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Feedback, ProgressBar, speak } from '../components/UI'
 import { useData } from '../context/DataContext'
+import { useScreenSize } from '../hooks/useScreenSize'
 
 const MEMORY_EMOJIS = ['🌸','🌻','🦋','🐠','🍎','🌈','🐶','🦁','🐸','🦊','🍓','⭐']
 
@@ -12,14 +13,10 @@ function buildCards(pairs) {
     .map((emoji, i) => ({ id: i, emoji, flipped: false, matched: false }))
 }
 
-function gridCols(pairs) {
-  if (pairs <= 3) return 'grid-cols-3'
-  return 'grid-cols-4'
-}
-
 export default function MemoryGame() {
   const nav = useNavigate()
   const { gameState, recordMemoryResult } = useData()
+  const { isSmall, isMedium } = useScreenSize()
   const PAIRS = Math.max(2, gameState.memoryPairs || 4)
 
   const [cards, setCards]       = useState(() => buildCards(PAIRS))
@@ -27,10 +24,13 @@ export default function MemoryGame() {
   const [locked, setLocked]     = useState(false)
   const [matchedCount, setMatchedCount] = useState(0)
   const [feedback, setFeedback] = useState('')
-
-  // ref לספירה מדויקת — לא תלויה ב-state אסינכרוני
   const totalChoicesRef = useRef(0)
   const hintTimer = useRef(null)
+
+  // גדלים דינמיים לפי המסך
+  const cardTextSize = isSmall ? '28px' : isMedium ? '32px' : '38px'
+  const btnH = isSmall ? '44px' : '52px'
+  const titleSize = isSmall ? '16px' : '20px'
 
   function resetHintTimer() {
     clearTimeout(hintTimer.current)
@@ -67,9 +67,7 @@ export default function MemoryGame() {
       setFeedback('יפה מאוד! 🌟')
       speak('יפה מאוד')
       if (newCount === PAIRS) {
-        // חישוב ממוצע מדויק מה-ref
         const avg = totalChoicesRef.current / PAIRS
-        console.log('משחק הסתיים — סך בחירות:', totalChoicesRef.current, 'זוגות:', PAIRS, 'ממוצע:', avg.toFixed(2))
         recordMemoryResult(avg)
         setTimeout(() => nav('/success?from=memory'), 1200)
       }
@@ -98,14 +96,17 @@ export default function MemoryGame() {
     }, 1800)
   }
 
+  const cols = PAIRS <= 3 ? 3 : 4
+
   return (
-    <div className="screen-enter flex flex-col items-center min-h-[85vh]">
-      <div className="top-bar">
-        <span className="app-logo">🃏 משחק זיכרון</span>
+    <div style={{ display:'flex', flexDirection:'column', flex:1, overflow:'hidden' }}>
+      {/* כותרת */}
+      <div className="top-bar" style={{ marginBottom: isSmall ? '6px' : '10px' }}>
+        <span className="app-logo" style={{ fontSize: isSmall ? '16px' : '20px' }}>🃏 משחק זיכרון</span>
         <div className="flex items-center gap-2">
-          <span className="text-[13px] text-gray-400 bg-gray-100 px-2 py-1 rounded-full">{PAIRS} זוגות</span>
+          <span style={{ fontSize:'12px', color:'#888', background:'#f3f4f6', padding:'4px 10px', borderRadius:'99px' }}>{PAIRS} זוגות</span>
           <button
-            className="px-4 py-2 rounded-full border-2 border-accent text-accent font-semibold text-[15px] bg-white active:scale-95"
+            style={{ padding:'6px 14px', borderRadius:'99px', border:'2px solid #E67E2E', color:'#E67E2E', fontSize:'14px', fontWeight:700, background:'white' }}
             onClick={giveHint}
           >
             💡 רמז
@@ -113,32 +114,58 @@ export default function MemoryGame() {
         </div>
       </div>
 
-      <p className="text-[20px] text-gray-600 mb-3 font-medium">התאימי שתי תמונות זהות</p>
-      <ProgressBar value={matchedCount} max={PAIRS} />
-      <Feedback msg={feedback} />
+      <p style={{ fontSize: titleSize, color:'#4B5563', marginBottom: isSmall ? '4px' : '8px', textAlign:'center', fontWeight:500 }}>
+        התאימי שתי תמונות זהות
+      </p>
 
-      <div className={`grid ${gridCols(PAIRS)} gap-3 w-full max-w-sm my-2`}>
+      <ProgressBar value={matchedCount} max={PAIRS} />
+
+      <div style={{ minHeight:'28px', textAlign:'center', fontSize:'18px', fontWeight:700, color:'#3A7D44', margin: isSmall ? '2px 0' : '4px 0' }}>
+        {feedback || '\u00A0'}
+      </div>
+
+      {/* לוח קלפים — ממלא את השטח הזמין */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: `repeat(${cols}, 1fr)`,
+        gap: isSmall ? '8px' : '12px',
+        flex: 1,
+        alignContent: 'center',
+      }}>
         {cards.map(card => (
           <button
             key={card.id}
             onClick={() => flipCard(card)}
-            className={`
-              aspect-square rounded-2xl border-3 text-[36px]
-              flex items-center justify-center transition-all duration-200 select-none
-              ${card.matched
-                ? 'bg-success-light border-success cursor-default'
-                : card.flipped
-                  ? 'bg-white border-primary'
-                  : 'bg-primary border-primary text-white active:scale-95'
-              }
-            `}
+            style={{
+              aspectRatio: '1',
+              borderRadius: '14px',
+              border: card.matched ? '3px solid #3A7D44'
+                    : card.flipped  ? '3px solid #2E7D8C'
+                    : '3px solid #2E7D8C',
+              background: card.matched ? '#EAF5EC'
+                         : card.flipped  ? 'white'
+                         : '#2E7D8C',
+              fontSize: cardTextSize,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: card.matched ? 'default' : 'pointer',
+              transition: 'all 0.15s',
+              color: (!card.flipped && !card.matched) ? 'white' : 'inherit',
+            }}
           >
             {(card.flipped || card.matched) ? card.emoji : '★'}
           </button>
         ))}
       </div>
 
-      <button className="btn-back mt-6" onClick={() => nav('/activities')}>→ חזרה</button>
+      {/* כפתור חזרה */}
+      <button
+        onClick={() => nav('/activities')}
+        style={{ marginTop: isSmall ? '8px' : '12px', padding:`8px 24px`, borderRadius:'99px', border:'2px solid #D1D5DB', color:'#6B7280', fontSize:'15px', background:'white', alignSelf:'center' }}
+      >
+        → חזרה
+      </button>
     </div>
   )
 }

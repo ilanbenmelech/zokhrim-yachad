@@ -1,5 +1,5 @@
 import React from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { DataProvider } from './context/DataContext'
 
 import HomeScreen             from './screens/HomeScreen'
@@ -17,30 +17,60 @@ import SettingsScreen         from './screens/SettingsScreen'
 import HelpScreen             from './screens/HelpScreen'
 import GoodbyeScreen          from './screens/GoodbyeScreen'
 
+// מסכי משחק — ממלאים את המסך בלי גלילה
+const GAME_SCREENS = ['/memory', '/who-is-it', '/daily', '/success', '/goodbye']
+
+function Layout({ children }) {
+  const { pathname } = useLocation()
+  const isGame = GAME_SCREENS.some(p => pathname.startsWith(p))
+
+  return (
+    <div
+      className="min-h-screen bg-warm font-hebrew"
+      dir="rtl"
+      style={isGame ? {
+        height: '100dvh',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+      } : {}}
+    >
+      <div
+        className="max-w-lg mx-auto w-full"
+        style={isGame ? {
+          flex: 1,
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '12px 16px',
+        } : { padding: '24px 16px' }}
+      >
+        {children}
+      </div>
+    </div>
+  )
+}
+
 export default function App() {
   return (
     <DataProvider>
-      <div className="min-h-screen bg-warm font-hebrew" dir="rtl">
-        <div className="max-w-lg mx-auto px-4 py-6">
-          <Routes>
-            <Route path="/"                    element={<HomeScreen />} />
-            <Route path="/activities"          element={<ActivitiesScreen />} />
-            <Route path="/memory"              element={<MemoryGame />} />
-            <Route path="/who-is-it"           element={<WhoIsItGame />} />
-            <Route path="/daily"               element={<DailyScreen />} />
-            <Route path="/photos"              element={<PhotosScreen />} />
-            <Route path="/success"             element={<SuccessScreen />} />
-            <Route path="/caregiver-login"     element={<CaregiverLoginScreen />} />
-            <Route path="/caregiver"           element={<CaregiverScreen />} />
-            <Route path="/caregiver/family"    element={<FamilyManagerScreen />} />
-            <Route path="/caregiver/questions" element={<QuestionsManagerScreen />} />
-            <Route path="/caregiver/settings"  element={<SettingsScreen />} />
-            <Route path="/help"                element={<HelpScreen />} />
-            <Route path="/goodbye"             element={<GoodbyeScreen />} />
-            <Route path="*"                    element={<Navigate to="/" />} />
-          </Routes>
-        </div>
-      </div>
+      <Routes>
+        <Route path="/" element={<Layout><HomeScreen /></Layout>} />
+        <Route path="/activities" element={<Layout><ActivitiesScreen /></Layout>} />
+        <Route path="/memory" element={<Layout><MemoryGame /></Layout>} />
+        <Route path="/who-is-it" element={<Layout><WhoIsItGame /></Layout>} />
+        <Route path="/daily" element={<Layout><DailyScreen /></Layout>} />
+        <Route path="/photos" element={<Layout><PhotosScreen /></Layout>} />
+        <Route path="/success" element={<Layout><SuccessScreen /></Layout>} />
+        <Route path="/caregiver-login" element={<Layout><CaregiverLoginScreen /></Layout>} />
+        <Route path="/caregiver" element={<Layout><CaregiverScreen /></Layout>} />
+        <Route path="/caregiver/family" element={<Layout><FamilyManagerScreen /></Layout>} />
+        <Route path="/caregiver/questions" element={<Layout><QuestionsManagerScreen /></Layout>} />
+        <Route path="/caregiver/settings" element={<Layout><SettingsScreen /></Layout>} />
+        <Route path="/help" element={<Layout><HelpScreen /></Layout>} />
+        <Route path="/goodbye" element={<Layout><GoodbyeScreen /></Layout>} />
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
     </DataProvider>
   )
 }

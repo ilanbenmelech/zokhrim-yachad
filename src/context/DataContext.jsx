@@ -81,12 +81,36 @@ export function DataProvider({ children }) {
   function updateFamilyMember(id,u){ saveFamilyToDb(family.map(f => f.id===id ? {...f,...u} : f)) }
   function removeFamilyMember(id)  { saveFamilyToDb(family.filter(f => f.id!==id)) }
 
+  /* ── כיווץ תמונה לפני העלאה ── */
+  function compressImage(file, maxSize = 800, quality = 0.75) {
+    return new Promise((resolve) => {
+      const img = new Image()
+      const objectUrl = URL.createObjectURL(file)
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl)
+        let { width, height } = img
+        if (width > height) {
+          if (width > maxSize) { height = Math.round(height * maxSize / width); width = maxSize }
+        } else {
+          if (height > maxSize) { width = Math.round(width * maxSize / height); height = maxSize }
+        }
+        const canvas = document.createElement('canvas')
+        canvas.width = width
+        canvas.height = height
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height)
+        canvas.toBlob(blob => resolve(blob || file), 'image/jpeg', quality)
+      }
+      img.onerror = () => { URL.revokeObjectURL(objectUrl); resolve(file) }
+      img.src = objectUrl
+    })
+  }
+
   /* ── העלאת תמונה ל-Storage ── */
   async function uploadPhoto(memberId, file) {
-    const ext  = file.name.split('.').pop()
-    const path = `photos/${memberId}/${Date.now()}.${ext}`
+    const compressed = await compressImage(file)
+    const path = `photos/${memberId}/${Date.now()}.jpg`
     const storageRef = ref(storage, path)
-    await uploadBytes(storageRef, file)
+    await uploadBytes(storageRef, compressed, { contentType: 'image/jpeg' })
     const url = await getDownloadURL(storageRef)
     const member = family.find(f => f.id === memberId)
     if (!member) return

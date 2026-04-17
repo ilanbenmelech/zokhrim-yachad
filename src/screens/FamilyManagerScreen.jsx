@@ -20,8 +20,15 @@ function PhotoGrid({ photos, onAdd, onDelete, uploading }) {
       </label>
       <div className="flex flex-wrap gap-2 mb-2">
         {photos.map((p, i) => (
-          <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden border-2 border-gray-200">
-            <img src={p.url} alt="" className="w-full h-full object-cover" />
+          <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden border-2 border-gray-200 bg-gray-100">
+            <img
+              src={p.url}
+              alt=""
+              loading="lazy"
+              className="w-full h-full object-cover"
+              onLoad={e => e.target.style.opacity = 1}
+              style={{ opacity: 0, transition: 'opacity 0.3s' }}
+            />
             <button
               onClick={() => onDelete(p)}
               className="absolute top-0.5 left-0.5 w-5 h-5 bg-red-500 text-white rounded-full text-[12px] flex items-center justify-center font-bold"
@@ -47,7 +54,7 @@ function MemberCard({ member, onEdit, onDelete }) {
   return (
     <div className="bg-white rounded-2xl border border-gray-200 p-4 flex items-center gap-4">
       <div className="w-14 h-14 rounded-full bg-primary-light border-2 border-primary flex items-center justify-center text-[30px] overflow-hidden flex-shrink-0">
-        {mainPhoto ? <img src={mainPhoto} alt={member.name} className="w-full h-full object-cover" /> : member.emoji}
+        {mainPhoto ? <img src={mainPhoto} alt={member.name} loading="lazy" className="w-full h-full object-cover" /> : member.emoji}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">

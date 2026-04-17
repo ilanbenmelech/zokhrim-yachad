@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { TopBar, Feedback, speak } from '../components/UI'
+import { speak } from '../components/UI'
 import { useData } from '../context/DataContext'
+import { useScreenSize } from '../hooks/useScreenSize'
 
 const DAYS = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת']
 const todayName = DAYS[new Date().getDay()]
@@ -9,45 +10,44 @@ const todayName = DAYS[new Date().getDay()]
 export default function DailyScreen() {
   const nav = useNavigate()
   const { questions } = useData()
+  const { isSmall } = useScreenSize()
 
-  const [idx, setIdx] = useState(0)
+  const [idx, setIdx]         = useState(0)
   const [choices, setChoices] = useState([])
   const [answered, setAnswered] = useState(false)
   const [feedback, setFeedback] = useState('')
-  const [chosen, setChosen] = useState(null)
+  const [chosen, setChosen]   = useState(null)
 
   const q = questions[idx]
 
   useEffect(() => {
     if (!q) return
-    // אם שאלת יום — השתמש בימים אמיתיים
     if (q.isDay) {
-      const others = DAYS.filter(d => d !== todayName).sort(() => Math.random() - 0.5).slice(0, 2)
+      const others = DAYS.filter(d => d !== todayName).sort(() => Math.random() - 0.5).slice(0,2)
       setChoices([todayName, ...others].sort(() => Math.random() - 0.5))
     } else {
-      setChoices([...(q.choices || [])].sort(() => Math.random() - 0.5))
+      setChoices([...(q.choices||[])].sort(() => Math.random() - 0.5))
     }
     speak(q.question)
     setAnswered(false); setFeedback(''); setChosen(null)
   }, [idx, questions])
 
   if (!questions.length) return (
-    <div className="flex flex-col items-center justify-center min-h-[85vh] text-center gap-4">
-      <p className="text-[20px] text-gray-500">אין שאלות יומיות מוגדרות</p>
+    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', flex:1, textAlign:'center', gap:'16px' }}>
+      <p style={{ fontSize:'20px', color:'#6B7280' }}>אין שאלות יומיות מוגדרות</p>
       <button className="btn-main filled" onClick={() => nav('/caregiver/questions')}>הוספת שאלות</button>
     </div>
   )
 
   const correct = q.isDay ? todayName : q.correct
+  const btnH = isSmall ? '60px' : '72px'
+  const btnFont = isSmall ? '19px' : '22px'
 
   function answer(choice) {
     if (answered) return
     setAnswered(true); setChosen(choice)
-    if (choice === correct) {
-      setFeedback('מצוין! ממש נכון 🌟'); speak('מצוין! ממש נכון')
-    } else {
-      setFeedback(`התשובה הנכונה היא: ${correct} ❤️`); speak(`התשובה הנכונה היא ${correct}`)
-    }
+    if (choice === correct) { setFeedback('מצוין! ממש נכון 🌟'); speak('מצוין! ממש נכון') }
+    else { setFeedback(`התשובה הנכונה היא: ${correct} ❤️`); speak(`התשובה הנכונה היא ${correct}`) }
   }
 
   function next() {
@@ -56,36 +56,59 @@ export default function DailyScreen() {
   }
 
   return (
-    <div className="screen-enter flex flex-col items-center min-h-[85vh]">
-      <TopBar title="תרגול יומי" />
-      <h1 className="screen-title">תרגול יומי ☀️</h1>
-      <div className="w-full max-w-md bg-white rounded-2xl border-2 border-primary-light p-7 mb-6 text-center shadow-sm">
-        <p className="text-[26px] font-bold text-gray-800">{q.question}</p>
-        <button className="mt-3 text-primary text-[16px] underline" onClick={() => speak(q.question)}>
+    <div style={{ display:'flex', flexDirection:'column', flex:1, overflow:'hidden', alignItems:'center' }}>
+      <div className="top-bar" style={{ width:'100%', marginBottom: isSmall ? '6px' : '12px' }}>
+        <span className="app-logo" style={{ fontSize: isSmall ? '16px' : '20px' }}>☀️ תרגול יומי</span>
+        <button onClick={() => nav('/')} style={{ padding:'6px 16px', borderRadius:'99px', border:'2px solid #D1D5DB', color:'#6B7280', fontSize:'14px', background:'white' }}>
+          → בית
+        </button>
+      </div>
+
+      {/* שאלה */}
+      <div style={{
+        width:'100%', maxWidth:'440px',
+        background:'white', borderRadius:'20px',
+        border:'2px solid #E8F4F6',
+        padding: isSmall ? '16px' : '24px',
+        textAlign:'center', marginBottom: isSmall ? '12px' : '20px',
+      }}>
+        <p style={{ fontSize: isSmall ? '22px' : '26px', fontWeight:700, color:'#1F2937' }}>{q.question}</p>
+        <button onClick={() => speak(q.question)} style={{ marginTop:'8px', fontSize:'15px', color:'#2E7D8C', textDecoration:'underline', background:'none', border:'none' }}>
           🔊 השמיעי שוב
         </button>
       </div>
-      <div className="flex flex-col gap-4 w-full max-w-md">
+
+      {/* תשובות */}
+      <div style={{ display:'flex', flexDirection:'column', gap: isSmall ? '8px' : '12px', width:'100%', maxWidth:'440px', flex:1 }}>
         {choices.map(c => {
-          let style = 'bg-white border-gray-300 text-gray-800'
-          if (answered && c === correct) style = 'bg-success-light border-success text-success'
-          else if (answered && c === chosen && c !== correct) style = 'bg-red-50 border-red-400 text-red-700'
+          let bg = 'white', border = '#D1D5DB', color = '#1F2937'
+          if (answered && c === correct) { bg='#EAF5EC'; border='#3A7D44'; color='#3A7D44' }
+          else if (answered && c === chosen && c !== correct) { bg='#FCEBEB'; border='#E24B4A'; color='#A32D2D' }
           return (
             <button key={c} disabled={answered} onClick={() => answer(c)}
-              className={`w-full h-[72px] rounded-2xl border-2 text-[22px] font-bold transition-all active:scale-95 ${style}`}>
+              style={{ width:'100%', height:btnH, borderRadius:'16px', border:`2px solid ${border}`,
+                background:bg, color, fontSize:btnFont, fontWeight:700, transition:'all 0.15s' }}>
               {c}
             </button>
           )
         })}
       </div>
-      <Feedback msg={feedback} />
-      <div className="flex gap-4 mt-4">
+
+      <div style={{ fontSize:'18px', fontWeight:700, color:'#3A7D44', minHeight:'28px', marginTop:'8px', textAlign:'center' }}>
+        {feedback || '\u00A0'}
+      </div>
+
+      <div style={{ display:'flex', gap:'12px', marginTop: isSmall ? '8px' : '12px' }}>
         {answered && (
-          <button onClick={next} className="px-8 py-3 rounded-full bg-primary text-white text-[18px] font-bold active:scale-95">
+          <button onClick={next}
+            style={{ padding:'10px 28px', borderRadius:'99px', background:'#2E7D8C', color:'white', fontSize:'17px', fontWeight:700 }}>
             {idx + 1 < questions.length ? 'שאלה הבאה ←' : 'סיום 🌟'}
           </button>
         )}
-        <button className="btn-back" onClick={() => nav('/')}>→ חזרה לבית</button>
+        <button onClick={() => nav('/')}
+          style={{ padding:'10px 20px', borderRadius:'99px', border:'2px solid #D1D5DB', color:'#6B7280', fontSize:'15px', background:'white' }}>
+          → חזרה לבית
+        </button>
       </div>
     </div>
   )
