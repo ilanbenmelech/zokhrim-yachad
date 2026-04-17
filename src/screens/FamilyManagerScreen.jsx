@@ -67,24 +67,29 @@ function MemberCard({ member, onEdit, onDelete }) {
 }
 
 function MemberForm({ initial, onSave, onCancel, memberId }) {
-  const { uploadPhoto, deletePhoto } = useData()
+  const { uploadPhoto, deletePhoto, family } = useData()
   const [form, setForm] = useState(initial || {
     name: '', relation: '', emoji: '👩‍🦳', photos: [],
     gender: 'female', difficulty: 1, voice: '',
   })
   const [uploading, setUploading] = useState(false)
 
+  // תמונות עדכניות תמיד מה-Firebase (לא מה-form הישן)
+  const liveMember = family.find(f => f.id === memberId)
+  const livePhotos = liveMember?.photos || form.photos || []
+
   function set(k, v) { setForm(f => ({ ...f, [k]: v })) }
 
   async function handleAddPhotos(e) {
-console.log('files:', e.target.files.length, 'memberId:', memberId)
     const files = Array.from(e.target.files)
+    console.log('files:', files.length, 'memberId:', memberId)
     if (!files.length || !memberId) return
     setUploading(true)
     for (const file of files) {
       await uploadPhoto(memberId, file)
     }
     setUploading(false)
+    e.target.value = '' // reset input
   }
 
   async function handleDeletePhoto(photo) {
@@ -102,7 +107,7 @@ console.log('files:', e.target.files.length, 'memberId:', memberId)
       {/* תמונות */}
       {memberId ? (
         <PhotoGrid
-          photos={form.photos || []}
+          photos={livePhotos}
           onAdd={handleAddPhotos}
           onDelete={handleDeletePhoto}
           uploading={uploading}
@@ -114,7 +119,7 @@ console.log('files:', e.target.files.length, 'memberId:', memberId)
       )}
 
       {/* אמוג'י (אם אין תמונות) */}
-      {!(form.photos?.length) && (
+      {!livePhotos.length && (
         <div>
           <label className="text-[14px] text-gray-500 font-medium mb-1 block">אמוג'י</label>
           <div className="flex flex-wrap gap-2">
