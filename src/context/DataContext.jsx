@@ -125,12 +125,28 @@ export function DataProvider({ children }) {
   /* ── אלגוריתם רמות "מי זה?" ── */
   function recordWhoResult(success) {
     let { whoLevel, whoStreak, whoFails } = gameState
+
     if (success) {
-      whoStreak++; whoFails = 0
-      if (whoStreak >= 3 && whoLevel < 5) { whoLevel++; whoStreak = 0 }
+      whoStreak++
+      whoFails = 0
+      // עלה רמה אחרי 3 הצלחות רצופות, רק אם יש בני משפחה ברמה הבאה
+      if (whoStreak >= 3) {
+        const nextLevelExists = family.some(f => f.difficulty === whoLevel + 1)
+        if (nextLevelExists && whoLevel < 5) {
+          whoLevel++
+          whoStreak = 0
+        } else {
+          // אין ברמה הבאה — אפס streak בלי לעלות
+          whoStreak = 0
+        }
+      }
     } else {
-      whoFails++; whoStreak = 0
-      if (whoFails >= 2 && whoLevel > 1) { whoLevel--; whoFails = 0 }
+      whoFails++
+      whoStreak = 0
+      if (whoFails >= 2 && whoLevel > 1) {
+        whoLevel--
+        whoFails = 0
+      }
     }
     updateGameState({ whoLevel, whoStreak, whoFails })
   }
@@ -138,14 +154,12 @@ export function DataProvider({ children }) {
   /* ── אלגוריתם רמות זיכרון ── */
   function recordMemoryResult(avgChoicesPerPair) {
     let { memoryPairs, memoryStreak, memoryFails } = gameState
-    // ודא מינימום 4 זוגות
-    if (memoryPairs < 4) memoryPairs = 4
     if (avgChoicesPerPair < 2) {
       memoryStreak++; memoryFails = 0
       if (memoryStreak >= 2 && memoryPairs < 8) { memoryPairs++; memoryStreak = 0 }
     } else if (avgChoicesPerPair > 3) {
       memoryFails++; memoryStreak = 0
-      if (memoryFails >= 2 && memoryPairs > 4) { memoryPairs--; memoryFails = 0 }
+      if (memoryFails >= 2 && memoryPairs > 2) { memoryPairs--; memoryFails = 0 }
     } else {
       memoryStreak = 0; memoryFails = 0
     }
