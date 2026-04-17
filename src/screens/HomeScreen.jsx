@@ -42,9 +42,9 @@ export default function HomeScreen() {
         </button>
         <button
           className="text-gray-400 text-[15px] underline underline-offset-2"
-          onClick={() => nav('/goodbye')}
+          onClick={() => { speak(`להתראות ${settings.userName}`); nav('/goodbye') }}
         >
-          יציאה ✕
+          להתראות ✕
         </button>
       </div>
     </div>

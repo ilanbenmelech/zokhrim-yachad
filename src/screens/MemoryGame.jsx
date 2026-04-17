@@ -22,7 +22,7 @@ function gridCols(pairs) {
 export default function MemoryGame() {
   const nav = useNavigate()
   const { gameState, recordMemoryResult } = useData()
-  const PAIRS = gameState.memoryPairs || 3
+  const PAIRS = Math.max(4, gameState.memoryPairs || 4)
 
   const [cards, setCards]       = useState(() => buildCards(PAIRS))
   const [selected, setSelected] = useState([])
@@ -65,7 +65,7 @@ export default function MemoryGame() {
         // חישוב ממוצע בחירות לזוג
         const avg = (totalChoices + 1) / PAIRS
         recordMemoryResult(avg)
-        setTimeout(() => nav('/success'), 1200)
+        setTimeout(() => nav('/success?from=memory'), 1200)
       }
     } else {
       setCards(currentCards.map(c => c.id===a.id || c.id===b.id ? {...c, flipped:false} : c))
