@@ -112,10 +112,19 @@ export function DataProvider({ children }) {
     const storageRef = ref(storage, path)
     await uploadBytes(storageRef, compressed, { contentType: 'image/jpeg' })
     const url = await getDownloadURL(storageRef)
-    const member = family.find(f => f.id === memberId)
-    if (!member) return
+
+    // קריאה ישירה מ-Firebase — לא תלויה ב-state מקומי
+    const famSnap = await getDoc(doc(db, 'app', 'family'))
+    if (!famSnap.exists()) return
+    const items = famSnap.data().items || []
+    const member = items.find(f => f.id === memberId)
+    if (!member) {
+      console.warn('uploadPhoto: member not found in DB:', memberId)
+      return
+    }
     const photos = [...(member.photos || []), { url, path }]
-    updateFamilyMember(memberId, { photos })
+    const newItems = items.map(f => f.id === memberId ? { ...f, photos } : f)
+    await setDoc(doc(db, 'app', 'family'), { items: newItems })
     return url
   }
 
