@@ -107,25 +107,35 @@ export function DataProvider({ children }) {
 
   /* ── העלאת תמונה ל-Storage ── */
   async function uploadPhoto(memberId, file) {
-    const compressed = await compressImage(file)
-    const path = `photos/${memberId}/${Date.now()}.jpg`
-    const storageRef = ref(storage, path)
-    await uploadBytes(storageRef, compressed, { contentType: 'image/jpeg' })
-    const url = await getDownloadURL(storageRef)
+    try {
+      console.log('1. מתחיל כיווץ תמונה')
+      const compressed = await compressImage(file)
+      console.log('2. כיווץ הושלם, מעלה ל-Storage')
+      const path = `photos/${memberId}/${Date.now()}.jpg`
+      const storageRef = ref(storage, path)
+      await uploadBytes(storageRef, compressed, { contentType: 'image/jpeg' })
+      console.log('3. עלה ל-Storage, מקבל URL')
+      const url = await getDownloadURL(storageRef)
+      console.log('4. URL:', url)
 
-    // קריאה ישירה מ-Firebase — לא תלויה ב-state מקומי
-    const famSnap = await getDoc(doc(db, 'app', 'family'))
-    if (!famSnap.exists()) return
-    const items = famSnap.data().items || []
-    const member = items.find(f => f.id === memberId)
-    if (!member) {
-      console.warn('uploadPhoto: member not found in DB:', memberId)
-      return
+      // קריאה ישירה מ-Firebase
+      console.log('5. קורא מ-Firebase, memberId:', memberId)
+      const famSnap = await getDoc(doc(db, 'app', 'family'))
+      if (!famSnap.exists()) { console.error('family doc לא קיים!'); return }
+      const items = famSnap.data().items || []
+      console.log('6. נמצאו', items.length, 'אנשים')
+      const member = items.find(f => f.id === memberId)
+      if (!member) { console.error('האיש לא נמצא! IDs:', items.map(f => f.id)); return }
+      console.log('7. נמצא האיש:', member.name)
+      const photos = [...(member.photos || []), { url, path }]
+      const newItems = items.map(f => f.id === memberId ? { ...f, photos } : f)
+      console.log('8. שומר', photos.length, 'תמונות')
+      await setDoc(doc(db, 'app', 'family'), { items: newItems })
+      console.log('9. נשמר בהצלחה!')
+      return url
+    } catch(err) {
+      console.error('שגיאה בהעלאת תמונה:', err)
     }
-    const photos = [...(member.photos || []), { url, path }]
-    const newItems = items.map(f => f.id === memberId ? { ...f, photos } : f)
-    await setDoc(doc(db, 'app', 'family'), { items: newItems })
-    return url
   }
 
   async function deletePhoto(memberId, photo) {
