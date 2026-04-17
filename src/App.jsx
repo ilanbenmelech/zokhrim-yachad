@@ -15,6 +15,7 @@ import FamilyManagerScreen    from './screens/FamilyManagerScreen'
 import QuestionsManagerScreen from './screens/QuestionsManagerScreen'
 import SettingsScreen         from './screens/SettingsScreen'
 import HelpScreen             from './screens/HelpScreen'
+import GoodbyeScreen          from './screens/GoodbyeScreen'
 
 export default function App() {
   return (
@@ -35,6 +36,7 @@ export default function App() {
             <Route path="/caregiver/questions" element={<QuestionsManagerScreen />} />
             <Route path="/caregiver/settings"  element={<SettingsScreen />} />
             <Route path="/help"                element={<HelpScreen />} />
+            <Route path="/goodbye"             element={<GoodbyeScreen />} />
             <Route path="*"                    element={<Navigate to="/" />} />
           </Routes>
         </div>

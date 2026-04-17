@@ -55,10 +55,10 @@ export default function WhoIsItGame() {
     const correct = name === person.name
     recordWhoResult(correct)
     const msg = correct
-      ? `נכון! ${person.gender==='male'?'זה':'זו'} ${person.name}, ${person.relation} שלך 🌟`
-      : `${person.gender==='male'?'זה':'זו'} ${person.name}, ${person.relation} שלך ❤️`
-    setFeedback(msg)
-    speak(msg.replace('🌟','').replace('❤️','').replace('שלך', 'שלך'))
+      ? `נכון! ${person.gender==='male'?'זה':'זו'} ${person.name}, ${person.relation} שלָך 🌟`
+      : `${person.gender==='male'?'זה':'זו'} ${person.name}, ${person.relation} שלָך ❤️`
+    setFeedback(msg.replace('שלָך','שלך'))
+    speak(msg.replace('🌟','').replace('❤️',''))
   }
 
   function next() {

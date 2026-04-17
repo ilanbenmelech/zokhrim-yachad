@@ -42,7 +42,7 @@ export default function HomeScreen() {
         </button>
         <button
           className="text-gray-400 text-[15px] underline underline-offset-2"
-          onClick={() => { if(window.confirm('לצאת מהאפליקציה?')) window.close() }}
+          onClick={() => nav('/goodbye')}
         >
           יציאה ✕
         </button>

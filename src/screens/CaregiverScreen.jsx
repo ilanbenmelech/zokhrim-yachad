@@ -37,7 +37,7 @@ export default function CaregiverScreen() {
         <div className="flex gap-2">
           <button
             className="px-4 py-2 rounded-full border-2 border-primary bg-primary-light text-primary text-[14px] font-semibold active:scale-95"
-            onClick={() => nav('/help')}
+            onClick={() => nav('/help?mode=caregiver')}
           >
             ? עזרה
           </button>
