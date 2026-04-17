@@ -77,6 +77,7 @@ function MemberForm({ initial, onSave, onCancel, memberId }) {
   function set(k, v) { setForm(f => ({ ...f, [k]: v })) }
 
   async function handleAddPhotos(e) {
+console.log('files:', e.target.files.length, 'memberId:', memberId)
     const files = Array.from(e.target.files)
     if (!files.length || !memberId) return
     setUploading(true)
