@@ -6,7 +6,7 @@ export default function SuccessScreen() {
   const nav = useNavigate()
 
   useEffect(() => {
-    speak('כל הכבוד! עשית עבודה נהדרת')
+    speak('כל הכבוד! את עשית עבודה נהדרת היום')
   }, [])
 
   return (

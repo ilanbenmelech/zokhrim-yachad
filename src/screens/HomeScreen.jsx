@@ -33,12 +33,18 @@ export default function HomeScreen() {
         </BigButton>
       </div>
 
-      <div className="mt-auto pt-8 w-full border-t border-gray-200 text-center">
+      <div className="mt-auto pt-8 w-full border-t border-gray-200 flex justify-between items-center">
         <button
           className="text-gray-400 text-[15px] underline underline-offset-2"
-          onClick={() => nav('/caregiver')}
+          onClick={() => nav('/caregiver-login')}
         >
           🔑 ניהול למשפחה
+        </button>
+        <button
+          className="text-gray-400 text-[15px] underline underline-offset-2"
+          onClick={() => { if(window.confirm('לצאת מהאפליקציה?')) window.close() }}
+        >
+          יציאה ✕
         </button>
       </div>
     </div>

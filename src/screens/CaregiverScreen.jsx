@@ -24,7 +24,7 @@ export default function CaregiverScreen() {
     {
       icon: '⚙️',
       title: 'הגדרות',
-      desc: `שם: ${settings.userName} | זוגות: ${settings.memoryPairs}`,
+      desc: `שם: ${settings.userName}`,
       color: 'border-green-200 bg-green-50',
       path: '/caregiver/settings',
     },
@@ -34,12 +34,20 @@ export default function CaregiverScreen() {
     <div className="screen-enter flex flex-col min-h-[85vh]">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-[24px] font-bold text-primary">🔑 אזור ניהול</h1>
-        <button
-          className="px-5 py-2 rounded-full border-2 border-gray-300 text-gray-500 text-[15px] active:scale-95"
-          onClick={() => nav('/')}
-        >
-          חזרה לבית →
-        </button>
+        <div className="flex gap-2">
+          <button
+            className="px-4 py-2 rounded-full border-2 border-primary bg-primary-light text-primary text-[14px] font-semibold active:scale-95"
+            onClick={() => nav('/help')}
+          >
+            ? עזרה
+          </button>
+          <button
+            className="px-4 py-2 rounded-full border-2 border-gray-300 text-gray-500 text-[14px] active:scale-95"
+            onClick={() => nav('/')}
+          >
+            → בית
+          </button>
+        </div>
       </div>
 
       <p className="text-[17px] text-gray-500 mb-6">

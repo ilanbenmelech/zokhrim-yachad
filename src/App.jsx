@@ -2,18 +2,19 @@ import React from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { DataProvider } from './context/DataContext'
 
-import HomeScreen            from './screens/HomeScreen'
-import ActivitiesScreen      from './screens/ActivitiesScreen'
-import MemoryGame            from './screens/MemoryGame'
-import WhoIsItGame           from './screens/WhoIsItGame'
-import DailyScreen           from './screens/DailyScreen'
-import PhotosScreen          from './screens/PhotosScreen'
-import SuccessScreen         from './screens/SuccessScreen'
-import CaregiverScreen       from './screens/CaregiverScreen'
-import FamilyManagerScreen   from './screens/FamilyManagerScreen'
+import HomeScreen             from './screens/HomeScreen'
+import ActivitiesScreen       from './screens/ActivitiesScreen'
+import MemoryGame             from './screens/MemoryGame'
+import WhoIsItGame            from './screens/WhoIsItGame'
+import DailyScreen            from './screens/DailyScreen'
+import PhotosScreen           from './screens/PhotosScreen'
+import SuccessScreen          from './screens/SuccessScreen'
+import CaregiverLoginScreen   from './screens/CaregiverLoginScreen'
+import CaregiverScreen        from './screens/CaregiverScreen'
+import FamilyManagerScreen    from './screens/FamilyManagerScreen'
 import QuestionsManagerScreen from './screens/QuestionsManagerScreen'
-import SettingsScreen        from './screens/SettingsScreen'
-import HelpScreen            from './screens/HelpScreen'
+import SettingsScreen         from './screens/SettingsScreen'
+import HelpScreen             from './screens/HelpScreen'
 
 export default function App() {
   return (
@@ -28,6 +29,7 @@ export default function App() {
             <Route path="/daily"               element={<DailyScreen />} />
             <Route path="/photos"              element={<PhotosScreen />} />
             <Route path="/success"             element={<SuccessScreen />} />
+            <Route path="/caregiver-login"     element={<CaregiverLoginScreen />} />
             <Route path="/caregiver"           element={<CaregiverScreen />} />
             <Route path="/caregiver/family"    element={<FamilyManagerScreen />} />
             <Route path="/caregiver/questions" element={<QuestionsManagerScreen />} />

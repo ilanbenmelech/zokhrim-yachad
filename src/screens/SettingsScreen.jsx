@@ -42,32 +42,6 @@ export default function SettingsScreen() {
           <p className="text-[13px] text-gray-400 mt-1">יוצג כ: "שלום {form.userName || '...'} 👋"</p>
         </div>
 
-        {/* רמת קושי זיכרון */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-5">
-          <label className="text-[15px] text-gray-500 font-medium mb-3 block">
-            רמת קושי — משחק זיכרון
-          </label>
-          <div className="flex gap-3">
-            {[
-              { val: 2, label: 'קל מאוד', sub: '2 זוגות' },
-              { val: 3, label: 'קל',      sub: '3 זוגות' },
-              { val: 4, label: 'רגיל',    sub: '4 זוגות' },
-            ].map(opt => (
-              <button
-                key={opt.val}
-                onClick={() => set('memoryPairs', opt.val)}
-                className={`flex-1 py-3 rounded-xl border-2 text-center transition-all active:scale-95
-                  ${form.memoryPairs === opt.val
-                    ? 'border-primary bg-primary-light text-primary'
-                    : 'border-gray-200 text-gray-600'}`}
-              >
-                <p className="text-[15px] font-bold">{opt.label}</p>
-                <p className="text-[12px] text-gray-400">{opt.sub}</p>
-              </button>
-            ))}
-          </div>
-        </div>
-
         {/* קריינות אוטומטית */}
         <div className="bg-white rounded-2xl border border-gray-200 p-5">
           <div className="flex items-center justify-between">

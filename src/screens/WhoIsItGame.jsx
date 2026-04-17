@@ -58,7 +58,7 @@ export default function WhoIsItGame() {
       ? `נכון! ${person.gender==='male'?'זה':'זו'} ${person.name}, ${person.relation} שלך 🌟`
       : `${person.gender==='male'?'זה':'זו'} ${person.name}, ${person.relation} שלך ❤️`
     setFeedback(msg)
-    speak(msg.replace('🌟','').replace('❤️',''))
+    speak(msg.replace('🌟','').replace('❤️','').replace('שלך', 'שלך'))
   }
 
   function next() {

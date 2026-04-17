@@ -60,7 +60,7 @@ export default function MemoryGame() {
       setCards(updated)
       const newCount = matchedCount + 1
       setMatchedCount(newCount)
-      setFeedback('יופי מאוד! 🌟'); speak('יופי מאוד')
+      setFeedback('יפה מאוד! 🌟'); speak('יפה מאוד')
       if (newCount === PAIRS) {
         // חישוב ממוצע בחירות לזוג
         const avg = (totalChoices + 1) / PAIRS
