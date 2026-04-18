@@ -47,9 +47,9 @@ export default function MemoryGame() {
   function flipCard(card) {
     if (locked || card.flipped || card.matched) return
     resetHintTimer()
+    totalChoicesRef.current += 1  // סופר כל לחיצה בודדת
     const newCards = cards.map(c => c.id === card.id ? { ...c, flipped: true } : c)
     setCards(newCards)
-    totalChoicesRef.current += 1
     const newSelected = [...selected, card]
     setSelected(newSelected)
     if (newSelected.length === 2) {
@@ -67,7 +67,8 @@ export default function MemoryGame() {
       setFeedback('יפה מאוד! 🌟')
       speak('יפה מאוד')
       if (newCount === PAIRS) {
-        const avg = totalChoicesRef.current / PAIRS
+        const avg = totalChoicesRef.current / (PAIRS * 2)  // לחיצות / סך קלפים
+        console.log(`סיום: ${totalChoicesRef.current} לחיצות / ${PAIRS*2} קלפים = ${avg.toFixed(2)}`)
         recordMemoryResult(avg)
         setTimeout(() => nav('/success?from=memory'), 1200)
       }
