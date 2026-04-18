@@ -36,24 +36,28 @@ export default function WhoIsItGame() {
     const opts  = [person.name, ...wrong].sort(() => Math.random() - 0.5)
     setChoices(opts)
     setAnswered(false); setFeedback(''); setChosen(null); setHintShown(false)
-    speak('מי זה?')
+    speak('מי בתמונה?')
+  }
+
+  /* חילוץ רמז — הטקסט בין הפסיק הראשון לשני */
+  function getHint(p) {
+    const voice = p.voice || ''
+    const first  = voice.indexOf(',')
+    if (first === -1) return p.relation
+    const second = voice.indexOf(',', first + 1)
+    if (second === -1) return voice.slice(first + 1).trim()
+    return voice.slice(first + 1, second).trim()
   }
 
   if (!family.length) return (
     <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', flex:1, textAlign:'center', gap:'16px' }}>
-      <p style={{ fontSize:'20px', color:'#6B7280' }}>אין בני משפחה מוגדרים עדיין</p>
+      <p style={{ fontSize:'20px', color:'#6B7280' }}>אין ישויות מוגדרות עדיין</p>
       <button className="btn-main filled" onClick={() => nav('/caregiver/family')}>הוספת משפחה</button>
     </div>
   )
 
   const person = queue[idx % queue.length]
   if (!person) return null
-
-  function getHint(p) {
-    const voice = p.voice || ''
-    const commaIdx = voice.indexOf(',')
-    return commaIdx === -1 ? p.relation : voice.slice(commaIdx + 1).trim()
-  }
 
   function showHint() {
     const hint = getHint(person)
@@ -68,10 +72,9 @@ export default function WhoIsItGame() {
     const correct = name === person.name
     recordWhoResult(correct)
     const hint = getHint(person)
-    const prefix = person.gender === 'male' ? 'זה' : 'זו'
-    const msg = correct ? `נכון! ${prefix} ${person.name}, ${hint}` : `${prefix} ${person.name}, ${hint}`
+    const msg = correct ? `נכון! ${person.name} — ${hint}` : `זה/זו ${person.name} — ${hint}`
     setFeedback((correct ? '✓ ' : '') + msg)
-    speak(msg)
+    speak(person.voice || msg)
   }
 
   function next() {
@@ -79,37 +82,30 @@ export default function WhoIsItGame() {
     else { const ni = idx + 1; setIdx(ni); loadQuestion(queue, ni) }
   }
 
-  // גדלים לפי מסך
-  const photoSize = isSmall ? '140px' : isMedium ? '170px' : '200px'
-  const btnHeight = isSmall ? '58px' : '68px'
-  const btnFontSize = isSmall ? '19px' : '22px'
-  const nameFontSize = isSmall ? '14px' : '16px'
+  const photoSize   = isSmall ? '140px' : isMedium ? '170px' : '200px'
+  const btnHeight   = isSmall ? '58px'  : '68px'
+  const btnFontSize = isSmall ? '19px'  : '22px'
 
   return (
     <div style={{ display:'flex', flexDirection:'column', flex:1, overflow:'hidden', alignItems:'center' }}>
-      {/* כותרת */}
       <div className="top-bar" style={{ width:'100%', marginBottom: isSmall ? '4px' : '8px' }}>
-        <span className="app-logo" style={{ fontSize: isSmall ? '16px' : '20px' }}>👨‍👩‍👧 מי זה?</span>
+        <span className="app-logo" style={{ fontSize: isSmall ? '16px' : '20px' }}>👥 מי בתמונה?</span>
         <span style={{ fontSize:'13px', color:'#9CA3AF', background:'#F3F4F6', padding:'4px 12px', borderRadius:'99px' }}>
           רמה {gameState.whoLevel}
         </span>
       </div>
 
-      <p style={{ fontSize: isSmall ? '20px' : '24px', fontWeight:700, color:'#1F2937', marginBottom: isSmall ? '6px' : '10px' }}>
-        מי זה?
+      <p style={{ fontSize: isSmall ? '20px':'24px', fontWeight:700, color:'#1F2937', marginBottom: isSmall?'6px':'10px' }}>
+        מי בתמונה?
       </p>
 
       {/* תמונה */}
       <div style={{
-        width: photoSize, height: photoSize,
-        borderRadius: '50%',
-        background: '#E8F4F6',
-        border: '4px solid #2E7D8C',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: isSmall ? '60px' : '75px',
-        overflow: 'hidden',
-        flexShrink: 0,
-        marginBottom: isSmall ? '8px' : '12px',
+        width:photoSize, height:photoSize, borderRadius:'20px',
+        background:'#E8F4F6', border:'4px solid #2E7D8C',
+        display:'flex', alignItems:'center', justifyContent:'center',
+        fontSize: isSmall?'60px':'75px', overflow:'hidden', flexShrink:0,
+        marginBottom: isSmall?'8px':'12px',
       }}>
         {currentPhoto
           ? <img src={currentPhoto.url} alt={person.name} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
@@ -117,16 +113,17 @@ export default function WhoIsItGame() {
         }
       </div>
 
-      {/* 3 כפתורי תשובה */}
-      <div style={{ display:'flex', flexDirection:'column', gap: isSmall ? '7px' : '10px', width:'100%', maxWidth:'360px' }}>
+      {/* 3 תשובות */}
+      <div style={{ display:'flex', flexDirection:'column', gap: isSmall?'7px':'10px', width:'100%', maxWidth:'360px' }}>
         {choices.map(name => {
-          let bg = 'white', borderColor = '#D1D5DB', color = '#1F2937'
-          if (answered && name === person.name) { bg = '#EAF5EC'; borderColor = '#3A7D44'; color = '#3A7D44' }
-          else if (answered && name === chosen && name !== person.name) { bg = '#FCEBEB'; borderColor = '#E24B4A'; color = '#A32D2D' }
+          let bg='white', borderColor='#D1D5DB', color='#1F2937'
+          if (answered && name === person.name) { bg='#EAF5EC'; borderColor='#3A7D44'; color='#3A7D44' }
+          else if (answered && name===chosen && name!==person.name) { bg='#FCEBEB'; borderColor='#E24B4A'; color='#A32D2D' }
           return (
             <button key={name} disabled={answered} onClick={() => answer(name)}
-              style={{ width:'100%', height: btnHeight, borderRadius:'16px', border:`2px solid ${borderColor}`,
-                background: bg, color, fontSize: btnFontSize, fontWeight:700, transition:'all 0.15s' }}>
+              style={{ width:'100%', height:btnHeight, borderRadius:'16px', border:`2px solid ${borderColor}`,
+                background:bg, color, fontSize:btnFontSize, fontWeight:700, transition:'all 0.15s',
+                padding:'0 8px', textAlign:'center' }}>
               {name}
             </button>
           )
@@ -134,19 +131,19 @@ export default function WhoIsItGame() {
       </div>
 
       {/* פידבק */}
-      <div style={{ fontSize: nameFontSize, fontWeight:600, color:'#2E7D8C', minHeight:'24px', marginTop:'6px', textAlign:'center' }}>
+      <div style={{ fontSize:'15px', fontWeight:600, color:'#2E7D8C', minHeight:'22px', marginTop:'6px', textAlign:'center', padding:'0 8px' }}>
         {feedback || '\u00A0'}
       </div>
 
-      {/* כפתורי עזרה ומעבר */}
-      <div style={{ display:'flex', gap:'10px', flexWrap:'wrap', justifyContent:'center', marginTop: isSmall ? '6px' : '10px' }}>
+      {/* כפתורים */}
+      <div style={{ display:'flex', gap:'10px', flexWrap:'wrap', justifyContent:'center', marginTop: isSmall?'6px':'10px' }}>
         {!answered && !hintShown && (
           <button onClick={showHint}
             style={{ padding:'8px 18px', borderRadius:'99px', border:'2px solid #E67E2E', color:'#E67E2E', fontWeight:700, fontSize:'15px', background:'white' }}>
             💡 רמז
           </button>
         )}
-        <button onClick={() => speak(person.voice || 'מי זה?')}
+        <button onClick={() => speak(person.voice || 'מי בתמונה?')}
           style={{ fontSize:'15px', color:'#2E7D8C', textDecoration:'underline', background:'none', border:'none' }}>
           🔊 השמעה חוזרת
         </button>

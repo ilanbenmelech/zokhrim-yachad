@@ -8,15 +8,26 @@ const todayName = DAYS[new Date().getDay()]
 
 /* שמות לפי מגדר — ניתן להרחיב */
 export const NAMES_BY_GENDER = {
-  male:   ['דוד','משה','יוסי','אבי','רון','גיל','עמי','אורי','נועם','תום','ארי','בן','דן','אלי','שי'],
-  female: ['רחל','מרים','תמר','דינה','לאה','רות','נעמי','יעל','שרה','רונית','גלית','אורית','נירה','ליאת','מיכל'],
+  male:   ['דוד','משה','יוסי','אבי','רון','גיל','עמי','אורי','נועם','תום','ארי','בן','דן','אלי','שי','עמוס','יצחק','יעקב','אהרון','שמואל'],
+  female: ['רחל','מרים','תמר','דינה','לאה','רות','נעמי','יעל','שרה','רונית','גלית','אורית','נירה','ליאת','מיכל','חנה','רבקה','אסתר','יפה','זהבה'],
+}
+
+/* בניית שם שגוי לפי הרכב מגדרי */
+export function buildWrongName(genderCombo, excludeNames = []) {
+  if (!genderCombo || genderCombo.length === 0) return ''
+  const parts = genderCombo.map(g => {
+    const pool = (NAMES_BY_GENDER[g] || NAMES_BY_GENDER.female)
+      .filter(n => !excludeNames.includes(n))
+    return pool[Math.floor(Math.random() * pool.length)] || (g === 'male' ? 'דוד' : 'רחל')
+  })
+  return parts.length === 1 ? parts[0] : parts.slice(0,-1).join(', ') + ' ו' + parts[parts.length-1]
 }
 
 const DEFAULT_FAMILY = [
-  { id: 'sarah',  name: 'שרה',  relation: 'הבת',        emoji: '👩‍🦳', photos: [], gender: 'female', difficulty: 1, voice: 'זו שרה, הבת שלך' },
-  { id: 'daniel', name: 'דניאל',relation: 'הנכד',        emoji: '👨‍🦱', photos: [], gender: 'male',   difficulty: 2, voice: 'זה דניאל, הנכד שלך' },
-  { id: 'noa',    name: 'נועה', relation: 'הנכדה הקטנה', emoji: '👧',  photos: [], gender: 'female', difficulty: 3, voice: 'זו נועה, הנכדה הקטנה שלך' },
-  { id: 'yossi',  name: 'יוסי', relation: 'הבן',         emoji: '👨',  photos: [], gender: 'male',   difficulty: 1, voice: 'זה יוסי, הבן שלך' },
+  { id: 'sarah',  name: 'שרה',  relation: 'הבת',        emoji: '👩‍🦳', photos: [], gender: 'female', difficulty: 1, voice: 'זו שרה, הבת שלך',         groupType: 'single', genderCombo: ['female'] },
+  { id: 'daniel', name: 'דניאל',relation: 'הנכד',        emoji: '👨‍🦱', photos: [], gender: 'male',   difficulty: 2, voice: 'זה דניאל, הנכד שלך',       groupType: 'single', genderCombo: ['male']   },
+  { id: 'noa',    name: 'נועה', relation: 'הנכדה הקטנה', emoji: '👧',  photos: [], gender: 'female', difficulty: 3, voice: 'זו נועה, הנכדה הקטנה שלך', groupType: 'single', genderCombo: ['female'] },
+  { id: 'yossi',  name: 'יוסי', relation: 'הבן',         emoji: '👨',  photos: [], gender: 'male',   difficulty: 1, voice: 'זה יוסי, הבן שלך',          groupType: 'single', genderCombo: ['male']   },
 ]
 
 const DEFAULT_QUESTIONS = [
@@ -231,11 +242,43 @@ export function DataProvider({ children }) {
     return weighted.sort(() => Math.random() - 0.5).slice(0, 6)
   }
 
-  /* ── שמות שגויים לפי מגדר ── */
+  /* ── שמות שגויים לפי מגדר / קבוצה / משפחה ── */
   function getWrongNames(person, count = 2) {
-    const pool = NAMES_BY_GENDER[person.gender || 'female'] || NAMES_BY_GENDER.female
-    const filtered = pool.filter(n => n !== person.name)
-    return filtered.sort(() => Math.random() - 0.5).slice(0, count)
+    const groupType = person.groupType || 'single'
+
+    // משפחה — בחר מרשימת המשפחות האחרות
+    if (groupType === 'family') {
+      const families = family.filter(f => f.groupType === 'family' && f.id !== person.id)
+      if (families.length >= count) {
+        return families.sort(() => Math.random() - 0.5).slice(0, count).map(f => f.name)
+      }
+      // אם אין מספיק משפחות — השלם עם שמות גנריים
+      const fromFamilies = families.map(f => f.name)
+      const generic = ['משפחת לוי','משפחת כהן','משפחת גולן','משפחת אדר','משפחת בר']
+        .filter(n => n !== person.name && !fromFamilies.includes(n))
+      return [...fromFamilies, ...generic].slice(0, count)
+    }
+
+    // יחיד — כמו קודם
+    if (groupType === 'single') {
+      const pool = NAMES_BY_GENDER[person.gender || 'female'] || NAMES_BY_GENDER.female
+      return pool.filter(n => n !== person.name).sort(() => Math.random() - 0.5).slice(0, count)
+    }
+
+    // קבוצה (pair/trio/quad) — בנה שמות לפי הרכב מגדרי
+    const combo = person.genderCombo || []
+    const excludeNames = person.name.split(/[, ו]+/).map(s => s.trim()).filter(Boolean)
+    const wrongs = []
+    const usedNames = [...excludeNames]
+    for (let i = 0; i < count; i++) {
+      let attempt = buildWrongName(combo, usedNames)
+      // נסה עוד פעם אם יצא שם זהה
+      if (attempt === person.name) attempt = buildWrongName(combo, [...usedNames, attempt])
+      wrongs.push(attempt)
+      // הוסף את השמות שנוצרו למניעת כפילות
+      attempt.split(/[, ו]+/).forEach(n => { if (n.trim()) usedNames.push(n.trim()) })
+    }
+    return wrongs
   }
 
   const photoAlbum = [
